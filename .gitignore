@@ -1,0 +1,32 @@
+# Editor files directory
+.DS_Store
+.idea
+.vscode
+src/AdminConsole/api/graphql/.graphqlconfig
+
+# Dependency directory
+node_modules
+
+# Test coverage results
+coverage
+
+# Build directory
+build
+dist
+
+# Any log files
+*.log
+*.txt
+
+# direct.test.js ignore
+test/direct.test.js
+
+test.js
+src/helpers/phraseapp.js
+
+#local configs
+config.local*
+config.*.json
+
+/src/AdminConsole/api/graphql/.graphqlconfig
+*.tsbuildinfo
