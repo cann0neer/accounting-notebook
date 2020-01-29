@@ -1,18 +1,35 @@
 import 'reflect-metadata';
 import { Container } from 'inversify';
 import { interfaces, InversifyRestifyServer, TYPE } from 'inversify-restify-utils';
-import { FooController } from './controllers/FooController';
+import { TransactionsController } from './controllers/TransactionsController';
+import { InMemoryStorage } from './storages/InMemoryStorage';
+import restify from 'restify';
+import { DefaultController } from './controllers/DefaultController';
+import { JobQueue } from './lockers/JobQueue';
 
 // set up container
 const container = new Container();
 
-// note that you *must* bind your controllers to Controller
-container.bind<interfaces.Controller>(TYPE.Controller).to(FooController).whenTargetNamed('FooController');
+container.bind<interfaces.Controller>(TYPE.Controller)
+	.to(TransactionsController)
+	.whenTargetNamed('TransactionsController');
+
+container.bind<interfaces.Controller>(TYPE.Controller)
+	.to(DefaultController)
+	.whenTargetNamed('DefaultController');
+
+container.bind(InMemoryStorage).toSelf().inSingletonScope();
+container.bind(JobQueue).toSelf().inSingletonScope();
 
 // create server
 let server = new InversifyRestifyServer(container);
+server.setConfig((app) => {
+	app.use(restify.plugins.acceptParser(app.acceptable));
+	app.use(restify.plugins.queryParser());
+	app.use(restify.plugins.bodyParser());
+});
 
-let app = server.build();
+const app = server.build();
 app.listen(3000, 'localhost');
 
 console.info(`🚀 Rest Server is available at port 3000`);
