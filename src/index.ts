@@ -6,9 +6,10 @@ import { InMemoryStorage } from './storages/InMemoryStorage';
 import restify from 'restify';
 import { DefaultController } from './controllers/DefaultController';
 import { JobQueue } from './lockers/JobQueue';
+import { AccountEntity } from './entities/AccountEntity';
 
 // set up container
-const container = new Container();
+export const container = new Container();
 
 container.bind<interfaces.Controller>(TYPE.Controller)
 	.to(TransactionsController)
@@ -20,6 +21,8 @@ container.bind<interfaces.Controller>(TYPE.Controller)
 
 container.bind(InMemoryStorage).toSelf().inSingletonScope();
 container.bind(JobQueue).toSelf().inSingletonScope();
+
+container.bind(AccountEntity).toSelf();
 
 // create server
 let server = new InversifyRestifyServer(container);

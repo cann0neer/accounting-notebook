@@ -1,5 +1,5 @@
 import { Request } from 'restify';
-import { Controller, interfaces, Post } from 'inversify-restify-utils';
+import { Controller, Get, interfaces, Post } from 'inversify-restify-utils';
 import { inject, injectable } from 'inversify';
 import { ITransactionBody } from '../types/ITransactionBody';
 import { TransactionType } from '../types/TransactionType';
@@ -11,7 +11,9 @@ export class TransactionsController implements interfaces.Controller {
 
 	constructor(
 		@inject(InMemoryStorage) private storage: InMemoryStorage
-	) {}
+	) {
+		console.log('TransactionsController created');
+	}
 
 	// TODO: add params validation
 	@Post('/')
@@ -30,8 +32,20 @@ export class TransactionsController implements interfaces.Controller {
 		return { success: true };
 	}
 
-	async getBalance() {
-		const balance = await this.storage.getBalance();
-		return { balance };
+	@Get('/')
+	async getTransactionHistory() {
+		return  await this.storage.getTransactionHistory();
+	}
+
+	@Get('/:id')
+	async getTransactionHistoryById(req: Request) {
+		const transactionHistory = await this.storage.getTransactionHistory();
+		const historyItem = transactionHistory.find(historyItem => historyItem.id === req.params.id);
+
+		if (!historyItem) {
+			throw new Error('Not Found');
+		}
+
+		return historyItem;
 	}
 }

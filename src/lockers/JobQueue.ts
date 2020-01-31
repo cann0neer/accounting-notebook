@@ -1,11 +1,11 @@
 import { injectable } from 'inversify';
+import { container } from '../index';
 
 interface IJob {
 	target: any;
 	action: (...args: any[]) => Promise<any>;
 	params: any;
 	actionType: 'R' | 'W';
-	// callback: () => {};
 	resolve: (value?: any | PromiseLike<any>) => void;
 	reject: (reason?: any) => void;
 }
@@ -22,11 +22,10 @@ export class JobQueue {
 
 	addToQueue(job: IJob) {
 		this.waitingQueue.push(job);
-		this.doNextJob()
-			.catch(console.error);
+		this.nextJob().catch(console.error);
 	}
 
-	async doNextJob() {
+	async nextJob() {
 		if (this.isLocked || !this.waitingQueue.length) {
 			return ;
 		}
@@ -44,7 +43,8 @@ export class JobQueue {
 		}
 
 		try {
-			const resp = await nextJob.action.call(nextJob.target, nextJob.params);
+			const target = container.get(nextJob.target.constructor);
+			const resp = await nextJob.action.call(target, nextJob.params);
 			nextJob.resolve(resp);
 		} catch (err) {
 			nextJob.reject(err);
@@ -52,7 +52,6 @@ export class JobQueue {
 
 		this.isLocked = false;
 
-		this.doNextJob()
-			.catch(console.error);
+		this.nextJob().catch(console.error);
 	}
 }

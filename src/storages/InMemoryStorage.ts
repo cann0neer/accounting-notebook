@@ -1,17 +1,23 @@
 import { injectable } from 'inversify';
 import Lockable from '../decorators/Lockable';
 import WriteLock from '../decorators/WriteLock';
+import { AccountEntity } from '../entities/AccountEntity';
+import { TransactionEntity } from '../entities/TransactionEntity';
+import { TransactionType } from '../types/TransactionType';
 
 @injectable()
 @Lockable('balance')
 export class InMemoryStorage {
-	private balance: number;
-	// @ts-ignore
-	private transactionsHistory: any[];
+	account: AccountEntity;
+	transactionsHistory: TransactionEntity[];
 
 	constructor() {
-		this.balance = 0;
+		this.account = new AccountEntity(0);
 		this.transactionsHistory = [];
+
+		this.decrease = this.decrease.bind(this);
+		this.increase = this.increase.bind(this);
+
 		console.log('InMemoryStorage created');
 	}
 
@@ -23,14 +29,16 @@ export class InMemoryStorage {
 			throw new Error();
 		}
 
-		const newAmount = this.balance - amount;
+		const newAmount = this.account.balance - amount;
 
 		if (newAmount < 0) {
 			throw new Error();
 		}
 
-		this.balance = newAmount;
-		console.debug(`Balance DECREASED for ${amount}, balance ${this.balance}`);
+		const transaction = new TransactionEntity(TransactionType.CREDIT, amount);
+		this.transactionsHistory.push(transaction);
+		this.account.balance = newAmount;
+		console.debug(`Balance DECREASED for ${amount}, balance ${this.account.balance}`);
 	}
 
 	@WriteLock('balance')
@@ -43,15 +51,24 @@ export class InMemoryStorage {
 
 		return new Promise((resolve) => {
 			setTimeout(() => {
-				this.balance = (this.balance || 0) + amount;
-				console.debug(`Balance INCREASED for ${amount}, balance ${this.balance}`);
+
+				const transaction = new TransactionEntity(TransactionType.DEBIT, amount);
+				this.transactionsHistory.push(transaction);
+				this.account.balance = this.account.balance + amount;
+
+				console.debug(`Balance INCREASED for ${amount}, balance ${this.account.balance}`);
+
 				resolve();
-			}, 10000);
+			}, 1000);
 		});
 
 	}
 
 	async getBalance() {
-		return this.balance;
+		return this.account.balance;
+	}
+
+	async getTransactionHistory() {
+		return this.transactionsHistory;
 	}
 }
