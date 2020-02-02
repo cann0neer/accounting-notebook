@@ -1,51 +1,70 @@
-import { Request } from 'restify';
+import { Next, Request, Response } from 'restify';
+import restifyErrors from 'restify-errors';
 import { Controller, Get, interfaces, Post } from 'inversify-restify-utils';
 import { inject, injectable } from 'inversify';
 import { ITransactionBody } from '../types/ITransactionBody';
 import { TransactionType } from '../types/TransactionType';
-import { InMemoryStorage } from '../storages/InMemoryStorage';
+import { AccountingNotebookModel } from '../models/AccountingNotebookModel';
+import Joi from 'joi';
+import { transactionInputSchema } from '../validations/transactionInputSchema';
 
 @Controller('/transactions')
 @injectable()
 export class TransactionsController implements interfaces.Controller {
 
 	constructor(
-		@inject(InMemoryStorage) private storage: InMemoryStorage
+		@inject(AccountingNotebookModel) private storage: AccountingNotebookModel
 	) {
 		console.log('TransactionsController created');
 	}
 
-	// TODO: add params validation
-	@Post('/')
-	async makeTransaction(req: Request) {
-		console.log(req.body);
-		const transactionBody = req.body as ITransactionBody;
+	@Post('/', (req, _res, next) => {
+		const { error } = Joi.validate(req.body, transactionInputSchema);
+		return error ? next(new restifyErrors.UnprocessableEntityError(error.message)) : next();
+	})
+	async makeTransaction(req: Request, _res: Response, next: Next) {
+		try {
+			const transactionBody = req.body as ITransactionBody;
 
-		if (transactionBody.type === TransactionType.DEBIT) {
-			await this.storage.increase(Number(transactionBody.amount));
-		} else if (transactionBody.type === TransactionType.CREDIT) {
-			await this.storage.decrease(Number(transactionBody.amount));
-		} else {
-			return new Error();
+			if (transactionBody.type === TransactionType.DEBIT) {
+				await this.storage.decrease(Number(transactionBody.amount));
+			} else if (transactionBody.type === TransactionType.CREDIT) {
+				await this.storage.increase(Number(transactionBody.amount));
+			} else {
+				return new Error(`Unsupported transaction type=${transactionBody.type}`);
+			}
+
+			return { success: true };
+
+		} catch (err) {
+			next(err);
 		}
-
-		return { success: true };
 	}
 
 	@Get('/')
-	async getTransactionHistory() {
-		return  await this.storage.getTransactionHistory();
+	async getTransactionHistory(_req: Request, _res: Response, next: Next) {
+		try {
+			return await this.storage.getTransactionHistory();
+
+		} catch (err) {
+			next(err);
+		}
 	}
 
-	@Get('/:id')
-	async getTransactionHistoryById(req: Request) {
-		const transactionHistory = await this.storage.getTransactionHistory();
-		const historyItem = transactionHistory.find(historyItem => historyItem.id === req.params.id);
+	@Get('/:id', (req, _res, next) => {
+		const { error } = Joi.validate(req.params.id, Joi.string().uuid());
+		return error ? next(new restifyErrors.UnprocessableEntityError(error.message)) : next();
+	})
+	async getTransactionHistoryById(req: Request, _res: Response, next: Next) {
+		try {
+			const transactionHistoryItem = await this.storage.getTransactionHistoryById(req.params.id);
+			if (!transactionHistoryItem) {
+				return next(new restifyErrors.NotFoundError('Transaction Not Found'));
+			}
+			return transactionHistoryItem;
 
-		if (!historyItem) {
-			throw new Error('Not Found');
+		} catch (err) {
+			next(err);
 		}
-
-		return historyItem;
 	}
 }

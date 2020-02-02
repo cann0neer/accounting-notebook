@@ -1,18 +1,24 @@
 import { Controller, Get, interfaces } from 'inversify-restify-utils';
 import { inject, injectable } from 'inversify';
-import { InMemoryStorage } from '../storages/InMemoryStorage';
+import { AccountingNotebookModel } from '../models/AccountingNotebookModel';
+import { Next, Request, Response } from 'restify';
 
 @Controller('/')
 @injectable()
 export class DefaultController implements interfaces.Controller {
 
 	constructor(
-		@inject(InMemoryStorage) private storage: InMemoryStorage
+		@inject(AccountingNotebookModel) private storage: AccountingNotebookModel
 	) {}
 
 	@Get('/')
-	async getBalance() {
-		const balance = await this.storage.getBalance();
-		return { balance };
+	async getBalance(_req: Request, _res: Response, next: Next) {
+		try {
+			const balance = await this.storage.getBalance();
+			return { balance };
+
+		} catch (err) {
+			next(err);
+		}
 	}
 }
