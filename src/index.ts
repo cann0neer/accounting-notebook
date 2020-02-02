@@ -41,4 +41,4 @@ server.setConfig(function (app) {
 const app = server.build();
 app.listen(3000, 'localhost');
 
-console.info(`🚀 Rest Server is available at port 3000`);
+console.info(`🚀 Rest Server is available at http://localhost:3000/api`);

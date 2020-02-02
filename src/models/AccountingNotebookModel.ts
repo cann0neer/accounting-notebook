@@ -30,7 +30,9 @@ export class AccountingNotebookModel {
 		const newAmount = this.account.balance - amount;
 
 		if (newAmount < 0) {
-			throw new restifyErrors.ConflictError('This transaction leads to negative account balance');
+			throw new restifyErrors.ConflictError(
+				'Transaction is refused because it leads to negative account balance'
+			);
 		}
 
 		const transaction = new TransactionEntity(TransactionType.CREDIT, amount);

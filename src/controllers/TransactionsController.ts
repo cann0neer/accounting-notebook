@@ -14,9 +14,7 @@ export class TransactionsController implements interfaces.Controller {
 
 	constructor(
 		@inject(AccountingNotebookModel) private storage: AccountingNotebookModel
-	) {
-		console.log('TransactionsController created');
-	}
+	) {}
 
 	@Post('/', (req, _res, next) => {
 		const { error } = Joi.validate(req.body, transactionInputSchema);
