@@ -6,7 +6,6 @@ import { AccountingNotebookModel } from './models/AccountingNotebookModel';
 import restify from 'restify';
 import restifyErrors from 'restify-errors';
 import { DefaultController } from './controllers/DefaultController';
-import { AccountEntity } from './types/entities/AccountEntity';
 import { JobQueue } from './locker/JobQueue';
 
 // set up container
@@ -22,8 +21,6 @@ container.bind<interfaces.Controller>(TYPE.Controller)
 
 container.bind(AccountingNotebookModel).toSelf().inSingletonScope();
 container.bind(JobQueue).toSelf().inSingletonScope();
-
-container.bind(AccountEntity).toSelf();
 
 // create server
 let server = new InversifyRestifyServer(container, { defaultRoot: '/api' });

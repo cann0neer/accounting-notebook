@@ -1,6 +1,3 @@
-import { injectable } from 'inversify';
-
-@injectable()
 export class AccountEntity {
 	public balance: number;
 
