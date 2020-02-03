@@ -8,7 +8,7 @@ import { TransactionType } from '../types/TransactionType';
 import ReadLock from '../locker/decorators/ReadLock';
 
 @injectable()
-@Lockable('balance')
+@Lockable('balance') // for property 'balance' Lock instance will be created
 export class AccountingNotebookModel {
 	account: AccountEntity;
 	transactionsHistory: TransactionEntity[];
@@ -21,6 +21,9 @@ export class AccountingNotebookModel {
 		this.increase = this.increase.bind(this);
 	}
 
+	// this method is considered as a write operation for property 'balance';
+	// every method call will not be executed directly,
+	// instead the action will be queued and handled according to lock logic
 	@WriteLock('balance')
 	async decrease(amount: number) {
 		if (amount < 0) {
@@ -55,6 +58,7 @@ export class AccountingNotebookModel {
 		console.debug(`Balance INCREASED for ${amount}, balance ${this.account.balance}`);
 	}
 
+	// this method is considered as a read operation for property 'balance';
 	@ReadLock('balance')
 	async getBalance() {
 		return this.account.balance;

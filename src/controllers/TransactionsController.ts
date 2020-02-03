@@ -24,6 +24,8 @@ export class TransactionsController implements interfaces.Controller {
 		try {
 			const transactionBody = req.body as ITransactionBody;
 
+			// according to requirements, credit transaction leads to the account balance growth and
+			// debit transaction leads to the account balance reduction
 			if (transactionBody.type === TransactionType.DEBIT) {
 				await this.storage.decrease(Number(transactionBody.amount));
 			} else if (transactionBody.type === TransactionType.CREDIT) {
@@ -43,7 +45,6 @@ export class TransactionsController implements interfaces.Controller {
 	async getTransactionHistory(_req: Request, _res: Response, next: Next) {
 		try {
 			return await this.storage.getTransactionHistory();
-
 		} catch (err) {
 			next(err);
 		}

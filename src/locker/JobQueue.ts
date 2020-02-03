@@ -1,6 +1,15 @@
 import { injectable } from 'inversify';
 import { container } from '../index';
 
+/**
+ * Lock implementation is based on a queue mechanism.
+ * Methods decorated with @WriteLock, @ReadLock are handled through job queue.
+ * Every method call puts a new job to the queue.
+ * Queue jobs are handled one at a time.
+ * The Write action locks execution of a next job (both read and write operations).
+ * The Read action doesn't lock anything.
+ */
+
 interface IJob {
 	target: Function;
 	action: (args: any) => Promise<any>;
@@ -36,6 +45,7 @@ export class JobQueue {
 			return ;
 		}
 
+		// only write operation locks the queue
 		this.isLocked = nextJob.actionType === 'W';
 
 		try {
